@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Directory Structure Visualization</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    
+    header {
+      background-color: #f8f9fa;
+      padding: 10px 20px;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    #controls {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    
+    button {
+      padding: 6px 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    button:hover {
+      background-color: #45a049;
+    }
+    
+    #visualization {
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+    
+    .node circle {
+      fill: #999;
+      stroke: steelblue;
+      stroke-width: 1.5px;
+      cursor: pointer;
+    }
+    
+    .directory circle {
+      fill: #f8b500;
+    }
+    
+    .file circle {
+      fill: #75b79e;
+      r: 3;
+    }
+    
+    .node text {
+      font: 10px sans-serif;
+      user-select: none;
+    }
+    
+    .link {
+      fill: none;
+      stroke: #555;
+      stroke-opacity: 0.4;
+      stroke-width: 1.5px;
+    }
+    
+    .tooltip {
+      position: absolute;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      border-radius: 4px;
+      pointer-events: none;
+      font-size: 12px;
+      display: none;
+    }
+    
+    .searchBox {
+      padding: 5px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Directory Structure Visualization</h2>
+    <div id="controls">
+      <input type="text" class="searchBox" id="searchBox" placeholder="Search files/directories...">
+      <button id="expandAll">Expand All</button>
+      <button id="collapseAll">Collapse All</button>
+      <button id="zoomReset">Reset Zoom</button>
+      <label><input type="checkbox" id="toggleFiles" checked> Show Files</label>
+    </div>
+  </header>
+  
+  <div id="visualization"></div>
+  <div class="tooltip" id="tooltip"></div>
+  
+  <script>
+    // Get the dimensions of the visualization container
+    const container = document.getElementById('visualization');
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    
+    let i = 0;
+    let root;
+    let nodeData;
+    
+    // Create SVG and append to the visualization container
+    const svg = d3.select("#visualization").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+    
+    // Create a group for the tree layout
+    const g = svg.append("g")
+        .attr("transform", "translate(40,0)");
+    
+    // Set up zoom behavior
+    const zoom = d3.zoom()
+        .scaleExtent([0.1, 5])
+        .on("zoom", (event) => { 
+            g.attr("transform", event.transform);
+        });
+    
+    svg.call(zoom);
+    
+    // Create the tree layout
+    const treeLayout = d3.tree().size([height - 40, width - 160]);
+    
+    // Set up drag behavior
+    const drag = d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended);
+    
+    // Create a tooltip
+    const tooltip = d3.select("#tooltip");
+    
+    // Load the JSON data
+    d3.json("structure.json").then(data => {
+        // Process the data
+        processData(data);
+    }).catch(err => {
+        console.error("Error loading data:", err);
+        document.getElementById('visualization').innerHTML = 
+            `<div style="color:red; padding: 20px;">
+                Error loading structure.json file. Please make sure it exists in the same directory.
+                <br>Error: ${err.message}
+            </div>`;
+    });
+    
+    function processData(flatData) {
+        // Use the first path in flatData as our root
+        const rootKey = Object.keys(flatData)[0];
+        
+        // Extract the base directory name from the path
+        const baseName = rootKey.split('/').pop() || rootKey;
+        
+        // Create a hierarchical structure from the flat data
+        const treeData = { 
+            name: baseName, 
+            fullPath: rootKey,
+            type: 'directory',
+            children: [] 
+        };
+        
+        // Map to keep track of created nodes
+        const nodesMap = {};
+        nodesMap[rootKey] = treeData;
+        
+        // Process each path in the flat data
+        Object.keys(flatData).forEach(path => {
+            // Skip if this path is already in the map
+            if (!nodesMap[path]) {
+                const name = path.split('/').pop() || path;
+                nodesMap[path] = { 
+                    name: name, 
+                    fullPath: path,
+                    type: 'directory',
+                    children: [] 
+                };
+            }
+            
+            // Get the current entry
+            const entry = flatData[path];
+            
+            // Add files as children
+            if (entry.files && entry.files.length) {
+                entry.files.forEach(file => {
+                    nodesMap[path].children.push({ 
+                        name: file, 
+                        fullPath: `${path}/${file}`,
+                        type: 'file'
+                    });
+                });
+            }
+            
+            // Add directories as children
+            if (entry.dirs && entry.dirs.length) {
+                entry.dirs.forEach(dir => {
+                    const subdirPath = `${path}/${dir}`;
+                    
+                    // Create the subdir node if it doesn't exist
+                    if (!nodesMap[subdirPath]) {
+                        nodesMap[subdirPath] = { 
+                            name: dir, 
+                            fullPath: subdirPath,
+                            type: 'directory',
+                            children: [] 
+                        };
+                    }
+                    
+                    // Add as a child to the current path
+                    nodesMap[path].children.push(nodesMap[subdirPath]);
+                });
+            }
+        });
+        
+        // Create the d3 hierarchy
+        root = d3.hierarchy(treeData);
+        
+        // Initialize positions
+        root.x0 = height / 2;
+        root.y0 = 0;
+        
+        // Store all nodes for searching
+        nodeData = root.descendants();
+        
+        // Collapse all nodes initially
+        if (root.children) {
+            root.children.forEach(collapseNode);
+        }
+        
+        // Initial render
+        update(root);
+        
+        // Set up event listeners for controls
+        document.getElementById('expandAll').addEventListener('click', () => {
+            expandAll(root);
+            update(root);
+        });
+        
+        document.getElementById('collapseAll').addEventListener('click', () => {
+            if (root.children) {
+                root.children.forEach(collapseNode);
+                update(root);
+            }
+        });
+        
+        document.getElementById('zoomReset').addEventListener('click', () => {
+            svg.transition().duration(750).call(
+                zoom.transform,
+                d3.zoomIdentity.translate(40, 0)
+            );
+        });
+        
+        document.getElementById('toggleFiles').addEventListener('change', function() {
+            const showFiles = this.checked;
+            d3.selectAll('.file')
+                .style('display', showFiles ? 'inline' : 'none');
+        });
+        
+        document.getElementById('searchBox').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            searchNodes(searchTerm);
+        });
+    }
+    
+    function searchNodes(term) {
+        if (!term) {
+            // Reset all nodes to default appearance
+            d3.selectAll('.node circle')
+                .style('fill', null)
+                .style('stroke', null)
+                .style('stroke-width', null);
+            
+            return;
+        }
+        
+        // Highlight matching nodes
+        d3.selectAll('.node').each(function(d) {
+            const node = d3.select(this);
+            const matches = d.data.name.toLowerCase().includes(term);
+            
+            node.select('circle')
+                .style('fill', matches ? '#ff6b6b' : null)
+                .style('stroke', matches ? '#c92a2a' : null)
+                .style('stroke-width', matches ? '2px' : null);
+            
+            // Expand parent nodes to show matches
+            if (matches) {
+                let current = d.parent;
+                while (current) {
+                    if (current._children) {
+                        current.children = current._children;
+                        current._children = null;
+                    }
+                    current = current.parent;
+                }
+                update(root);
+            }
+        });
+    }
+    
+    function expandAll(node) {
+        if (node._children) {
+            node.children = node._children;
+            node._children = null;
+        }
+        
+        if (node.children) {
+            node.children.forEach(expandAll);
+        }
+    }
+    
+    function collapseNode(node) {
+        if (node.children) {
+            node._children = node.children;
+            node.children = null;
+            node._children.forEach(collapseNode);
+        }
+    }
+    
+    function update(source) {
+        // Compute the new tree layout
+        const nodes = root.descendants();
+        const links = root.links();
+        
+        // Normalize for fixed-depth
+        nodes.forEach(d => { d.y = d.depth * 180; });
+        
+        // ****************** Nodes section ***************************
+        
+        // Update the nodes...
+        const node = g.selectAll('g.node')
+            .data(nodes, d => d.id || (d.id = ++i));
+        
+        // Enter any new nodes at the parent's previous position
+        const nodeEnter = node.enter().append('g')
+            .attr('class', d => `node ${d.data.type}`)
+            .attr('transform', () => `translate(${source.y0},${source.x0})`)
+            .on('click', (event, d) => {
+                // Toggle children on click
+                if (d.children) {
+                    d._children = d.children;
+                    d.children = null;
+                } else if (d._children) {
+                    d.children = d._children;
+                    d._children = null;
+                }
+                update(d);
+            })
+            .on('mouseover', function(event, d) {
+                tooltip.style('display', 'block')
+                    .html(`<strong>${d.data.fullPath}</strong>`)
+                    .style('left', (event.pageX + 10) + 'px')
+                    .style('top', (event.pageY + 10) + 'px');
+            })
+            .on('mouseout', function() {
+                tooltip.style('display', 'none');
+            })
+            .call(drag);
+        
+        // Add Circle for the nodes
+        nodeEnter.append('circle')
+            .attr('r', d => d.data.type === 'directory' ? 5 : 3)
+            .attr('fill', d => d.data.type === 'directory' ? '#f8b500' : '#75b79e');
+        
+        // Add labels for the nodes
+        nodeEnter.append('text')
+            .attr('dy', '.35em')
+            .attr('x', d => (d.children || d._children) ? -10 : 10)
+            .attr('text-anchor', d => (d.children || d._children) ? 'end' : 'start')
+            .text(d => d.data.name);
+        
+        // UPDATE
+        const nodeUpdate = nodeEnter.merge(node);
+        
+        // Transition to the proper position for the nodes
+        nodeUpdate.transition()
+            .duration(500)
+            .attr('transform', d => `translate(${d.y},${d.x})`);
+        
+        // Update the node attributes and style
+        nodeUpdate.select('circle')
+            .attr('r', d => d.data.type === 'directory' ? 5 : 3);
+        
+        // Remove any exiting nodes
+        const nodeExit = node.exit().transition()
+            .duration(500)
+            .attr('transform', () => `translate(${source.y},${source.x})`)
+            .remove();
+        
+        // On exit reduce the node circles size to 0
+        nodeExit.select('circle')
+            .attr('r', 0);
+        
+        // ****************** links section ***************************
+        
+        // Update the links...
+        const link = g.selectAll('path.link')
+            .data(links, d => d.target.id);
+        
+        // Enter any new links at the parent's previous position
+        const linkEnter = link.enter().insert('path', 'g')
+            .attr('class', 'link')
+            .attr('d', () => {
+                const o = { x: source.x0, y: source.y0 };
+                return diagonal(o, o);
+            });
+        
+        // UPDATE
+        const linkUpdate = linkEnter.merge(link);
+        
+        // Transition back to the parent element position
+        linkUpdate.transition()
+            .duration(500)
+            .attr('d', d => diagonal(d.source, d.target));
+        
+        // Remove any exiting links
+        link.exit().transition()
+            .duration(500)
+            .attr('d', () => {
+                const o = { x: source.x, y: source.y };
+                return diagonal(o, o);
+            })
+            .remove();
+        
+        // Store the old positions for transition
+        nodes.forEach(d => {
+            d.x0 = d.x;
+            d.y0 = d.y;
+        });
+    }
+    
+    // Creates a curved (diagonal) path from parent to the child nodes
+    function diagonal(s, t) {
+        return `M ${s.y} ${s.x}
+                C ${(s.y + t.y) / 2} ${s.x},
+                  ${(s.y + t.y) / 2} ${t.x},
+                  ${t.y} ${t.x}`;
+    }
+    
+    // Functions for drag behavior
+    function dragstarted(event, d) {
+        event.sourceEvent.stopPropagation();
+        d3.select(this).classed('dragging', true);
+    }
+    
+    function dragged(event, d) {
+        d.x = event.y;
+        d3.select(this).attr('transform', `translate(${d.y},${d.x})`);
+    }
+    
+    function dragended(event, d) {
+        d3.select(this).classed('dragging', false);
+        update(root);
+    }
+  </script>
+</body>
+</html>
