@@ -1,0 +1,12 @@
+README.md
+setup.py
+jsontree/__init__.py
+jsontree/cli.py
+jsontree/mapper.py
+jsontree/visualize.html
+jsontree.egg-info/PKG-INFO
+jsontree.egg-info/SOURCES.txt
+jsontree.egg-info/dependency_links.txt
+jsontree.egg-info/entry_points.txt
+jsontree.egg-info/requires.txt
+jsontree.egg-info/top_level.txt

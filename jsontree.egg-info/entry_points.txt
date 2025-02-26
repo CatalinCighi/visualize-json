@@ -1,0 +1,2 @@
+[console_scripts]
+jsontree = jsontree.cli:main
