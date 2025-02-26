@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="dirmap",
+    name="jsontree",
     version="0.1.0",
     author="Catalin cighi",
     author_email="catalin.cighil@gmail.com",
@@ -27,7 +27,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "dirmap=dirmap.cli:main",
+            "jsontree=jsontree.cli:main",
         ],
     },
     # Include non-Python files in the package
@@ -36,6 +36,6 @@ setup(
     },
     # Include visualize.html in the package data
     data_files=[
-        ('', ['visualize.html']),
+        ("", ["visualize.html"]),
     ],
 )

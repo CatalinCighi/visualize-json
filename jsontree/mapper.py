@@ -111,7 +111,7 @@ def trim_structure(structure, exclude_patterns):
 
     logger.info(f"Original structure had {len(structure)} directories")
     logger.info(f"Trimmed structure has {len(trimmed_structure)} directories")
-    
+
     return trimmed_structure
 
 
@@ -161,34 +161,40 @@ def save_output(data, format_type, output_path):
 def setup_visualization(directory, structure_path):
     """
     Sets up visualization resources in the target directory.
-    
+
     Args:
         directory (str): Directory where visualization resources will be placed
         structure_path (str): Path to the structure.json file
-        
+
     Returns:
         str: Path to the visualization HTML file
     """
     # Get the package root directory to copy the visualization template
     current_dir = os.path.dirname(os.path.abspath(__file__))
     template_path = os.path.join(os.path.dirname(current_dir), "visualize.html")
-    
+
     # Copy the visualization HTML to the target directory
-    viz_path = os.path.join(directory, "dirmap_visualize.html")
-    
+    viz_path = os.path.join(directory, "jsontree_visualize.html")
+
     try:
         # Copy the template
         shutil.copy2(template_path, viz_path)
         logger.info(f"Visualization interface copied to {viz_path}")
-        
+
         return viz_path
     except Exception as e:
         logger.error(f"Error setting up visualization: {e}")
         return None
 
 
-def create_map(directory=None, output_format="json", exclude_patterns=None, 
-               trim=False, visualize=False, verbose=False):
+def create_map(
+    directory=None,
+    output_format="json",
+    exclude_patterns=None,
+    trim=False,
+    visualize=False,
+    verbose=False,
+):
     """
     Main function that maps a directory and saves the output.
 
@@ -209,12 +215,18 @@ def create_map(directory=None, output_format="json", exclude_patterns=None,
 
     # Set directory to map
     directory_to_map = os.path.abspath(directory or os.getcwd())
-    
+
     # Default exclude patterns if none provided
     if exclude_patterns is None and trim:
         exclude_patterns = [
-            ".git", "venv", "__pycache__", ".egg-info",
-            "dist", "build", "site-packages", ".ipynb_checkpoints"
+            ".git",
+            "venv",
+            "__pycache__",
+            ".egg-info",
+            "dist",
+            "build",
+            "site-packages",
+            ".ipynb_checkpoints",
         ]
 
     # Path to gitignore file
@@ -227,14 +239,14 @@ def create_map(directory=None, output_format="json", exclude_patterns=None,
 
     # Map directory structure
     mapped_structure = map_directory(directory_to_map, pathspec)
-    
+
     # Trim structure if requested
     if trim:
         mapped_structure = trim_structure(mapped_structure, exclude_patterns)
 
     # Path to save output
     output_path = os.path.join(directory_to_map, f"structure.{output_format}")
-    
+
     # Output paths dictionary
     result_paths = {"structure": output_path}
 
@@ -245,7 +257,7 @@ def create_map(directory=None, output_format="json", exclude_patterns=None,
 
     if save_success:
         logger.info(f"Process completed. Directory structure saved at {output_path}")
-        
+
         # Set up visualization if requested
         if visualize and output_format == "json":
             viz_path = setup_visualization(directory_to_map, output_path)
@@ -254,7 +266,7 @@ def create_map(directory=None, output_format="json", exclude_patterns=None,
                 logger.info(f"Visualization ready at {viz_path}")
             else:
                 logger.warning("Failed to set up visualization")
-        
+
         return result_paths
     else:
         logger.error("Failed to save directory structure")
