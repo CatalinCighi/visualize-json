@@ -18,5 +18,5 @@ RUN pip install -e .
 VOLUME /data
 
 # Set the default command - now supports all the CLI options
-ENTRYPOINT ["dirmap"]
+ENTRYPOINT ["jsontree"]
 CMD ["--directory", "/data", "--trim", "--visualize"]

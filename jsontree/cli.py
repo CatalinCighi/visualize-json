@@ -29,28 +29,28 @@ def main():
         default="json",
         help="Output format (default: json)",
     )
-    
+
     parser.add_argument(
         "-t",
         "--trim",
         action="store_true",
         help="Trim the output by excluding common directories like .git, __pycache__, etc.",
     )
-    
+
     parser.add_argument(
         "--exclude",
         type=str,
         nargs="+",
         help="Patterns to exclude when trimming (use with --trim)",
     )
-    
+
     parser.add_argument(
         "-v",
         "--visualize",
         action="store_true",
         help="Generate an HTML visualization of the directory structure (works only with JSON format)",
     )
-    
+
     parser.add_argument(
         "-o",
         "--open",
@@ -69,13 +69,13 @@ def main():
         action="store_true",
         help="Show version information and exit",
     )
-    
+
     parser.add_argument(
         "--serve",
         action="store_true",
         help="Start a web server to visualize the directory structure",
     )
-    
+
     parser.add_argument(
         "--port",
         type=int,
@@ -89,22 +89,24 @@ def main():
     if args.version:
         from . import __version__
 
-        print(f"dirmap version {__version__}")
+        print(f"jsontree version {__version__}")
         return 0
-        
+
     # Check for visualization format compatibility
     if args.visualize and args.format != "json":
-        print("Warning: Visualization only works with JSON format. Switching to JSON format.")
+        print(
+            "Warning: Visualization only works with JSON format. Switching to JSON format."
+        )
         args.format = "json"
 
     try:
         result_paths = mapper.create_map(
-            directory=args.directory, 
-            output_format=args.format, 
+            directory=args.directory,
+            output_format=args.format,
             exclude_patterns=args.exclude,
             trim=args.trim,
             visualize=args.visualize,
-            verbose=args.verbose
+            verbose=args.verbose,
         )
 
         if result_paths:
@@ -113,17 +115,19 @@ def main():
                 viz_path = result_paths["visualization"]
                 print(f"Opening visualization in browser: {viz_path}")
                 webbrowser.open(f"file://{viz_path}")
-            
+
             # Start web server if requested
             if args.serve and "structure" in result_paths:
                 structure_path = result_paths["structure"]
                 if args.format != "json":
-                    print("Warning: Server visualization requires JSON format. Please re-run with --format json")
+                    print(
+                        "Warning: Server visualization requires JSON format. Please re-run with --format json"
+                    )
                 else:
                     print(f"Starting server at http://localhost:{args.port}")
                     app = server.create_server(structure_path, port=args.port)
                     app.run(debug=True, port=args.port)
-            
+
             return 0
         return 1
 
