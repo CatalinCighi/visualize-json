@@ -1,0 +1,4 @@
+pathspec>=0.9.0
+PyYAML>=6.0
+Flask>=2.0.0
+click>=8.0.0
