@@ -171,7 +171,7 @@ def setup_visualization(directory, structure_path):
     """
     # Get the package root directory to copy the visualization template
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    template_path = os.path.join(os.path.dirname(current_dir), "visualize.html")
+    template_path = os.path.join(current_dir, "visualize.html")
 
     # Copy the visualization HTML to the target directory
     viz_path = os.path.join(directory, "visualize.html")
