@@ -174,7 +174,7 @@ def setup_visualization(directory, structure_path):
     template_path = os.path.join(os.path.dirname(current_dir), "visualize.html")
 
     # Copy the visualization HTML to the target directory
-    viz_path = os.path.join(directory, "jsontree_visualize.html")
+    viz_path = os.path.join(directory, "visualize.html")
 
     try:
         # Copy the template

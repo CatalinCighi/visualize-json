@@ -32,10 +32,6 @@ setup(
     },
     # Include non-Python files in the package
     package_data={
-        "": ["*.html"],
+        "jsontree": ["visualize.html"],
     },
-    # Include visualize.html in the package data
-    data_files=[
-        ("", ["visualize.html"]),
-    ],
 )
