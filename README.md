@@ -1,4 +1,4 @@
-# dirmap - Directory Mapping Tool
+# jsontree - Directory Mapping Tool
 
 A Python package that maps the structure of a directory while respecting `.gitignore` rules, with visualization capabilities and trimming options.
 
@@ -19,11 +19,11 @@ Install directly from GitHub:
 
 ```bash
 # Install from the repository
-pip install git+https://github.com/yourusername/dirmap.git
+pip install git+https://github.com/yourusername/jsontree.git
 
 # Or after cloning the repository
-git clone https://github.com/yourusername/dirmap.git
-cd dirmap
+git clone https://github.com/yourusername/jsontree.git
+cd jsontree
 pip install .
 ```
 
@@ -33,69 +33,69 @@ Basic mapping:
 
 ```bash
 # Map the current directory in JSON format (default)
-dirmap
+jsontree
 
 # Map a specific directory in YAML format
-dirmap --directory /path/to/your/directory --format yaml
+jsontree --directory /path/to/your/directory --format yaml
 ```
 
 Trimming options:
 
 ```bash
 # Map with common directories excluded
-dirmap --trim
+jsontree --trim
 
 # Map with custom exclude patterns
-dirmap --trim --exclude .git node_modules dist
+jsontree --trim --exclude .git node_modules dist
 ```
 
 Visualization options:
 
 ```bash
 # Generate visualization HTML
-dirmap --visualize
+jsontree --visualize
 
 # Generate visualization and open in browser
-dirmap --visualize --open
+jsontree --visualize --open
 
 # Start a web server to view the visualization
-dirmap --serve --port 8080
+jsontree --serve --port 8080
 ```
 
 All options:
 
 ```bash
 # Full example with all options
-dirmap --directory /path/to/dir --format json --trim --exclude .git __pycache__ --visualize --serve --port 8080
+jsontree --directory /path/to/dir --format json --trim --exclude .git __pycache__ --visualize --serve --port 8080
 ```
 
 Help information:
 
 ```bash
 # Show all available options
-dirmap --help
+jsontree --help
 
 # Show version
-dirmap --version
+jsontree --version
 ```
 
 ## Docker Usage
 
 ```bash
 # Build the Docker image
-docker build -t dirmap .
+docker build -t jsontree .
 
 # Run the container mapping a directory
-docker run -v /path/to/your/directory:/data dirmap
+docker run -v /path/to/your/directory:/data jsontree
 
 # Run with specific options
-docker run -v /path/to/your/directory:/data dirmap --format yaml --trim
+docker run -v /path/to/your/directory:/data jsontree --format yaml --trim
 ```
 
 ## Python API Usage
 
 ```python
-from dirmap import mapper
+from jsontree import mapper
 
 # Basic mapping
 result = mapper.create_map()
@@ -118,7 +118,7 @@ visualization_path = result["visualization"]  # Only if visualize=True
 Run a visualization server:
 
 ```python
-from dirmap import server
+from jsontree import server
 
 # Create and run a server for a structure.json file
 app = server.create_server("/path/to/structure.json", port=5000)
